@@ -12,6 +12,8 @@ from .common import Extractor, Message
 from .. import text, util, exception
 from ..cache import cache
 import itertools
+import random
+import time
 import math
 
 BASE_PATTERN = r"(?:https?://)?(e[x-]|g\.e-)hentai\.org"
@@ -44,6 +46,8 @@ class ExhentaiExtractor(Extractor):
 
         Extractor.__init__(self, match)
         self.original = self.config("original", True)
+        self.wait_min = self.config("wait-min", 3)
+        self.wait_max = self.config("wait-max", 6)
 
         limits = self.config("limits", False)
         if limits and limits.__class__ is int:
@@ -52,6 +56,8 @@ class ExhentaiExtractor(Extractor):
         else:
             self.limits = False
 
+        if self.wait_max < self.wait_min:
+            self.wait_max = self.wait_min
         self.session.headers["Referer"] = self.root + "/"
         if version != "ex":
             self.session.cookies.set("nw", "1", domain=self.cookiedomain)
@@ -62,6 +68,14 @@ class ExhentaiExtractor(Extractor):
             self.log.info("sadpanda.jpg")
             raise exception.AuthorizationError()
         return response
+
+    def wait(self, waittime=None):
+        """Wait for a randomly chosen amount of seconds"""
+        if not waittime:
+            waittime = random.uniform(self.wait_min, self.wait_max)
+        else:
+            waittime = random.uniform(waittime * 0.66, waittime * 1.33)
+        time.sleep(waittime)
 
     def login(self):
         """Login and set necessary cookies"""
@@ -186,6 +200,7 @@ class ExhentaiGalleryExtractor(ExhentaiExtractor):
                 self.log.error("Failed to extract initial image token")
                 self.log.debug("Page content:\n%s", gpage)
                 return
+            self.wait()
             ipage = self._image_page()
         else:
             ipage = self._image_page()
@@ -195,6 +210,7 @@ class ExhentaiGalleryExtractor(ExhentaiExtractor):
                 self.log.debug("Page content:\n%s", ipage)
                 return
             self.gallery_token = part.split("/")[1]
+            self.wait()
             gpage = self._gallery_page()
 
         data = self.get_metadata(gpage)
@@ -216,6 +232,7 @@ class ExhentaiGalleryExtractor(ExhentaiExtractor):
                 self._check_limits(data)
             if "/fullimg.php" in url:
                 data["extension"] = ""
+                self.wait()
                 data["_http_validate"] = _validate_response
             else:
                 data["_http_validate"] = None
@@ -323,6 +340,7 @@ class ExhentaiGalleryExtractor(ExhentaiExtractor):
             "showkey": self.key["show"],
         }
         for request["page"] in range(self.image_num + 1, self.count + 1):
+            self.wait()
             page = self.request(api_url, method="POST", json=request).json()
             imgkey = nextkey
             nextkey, pos = text.extract(page["i3"], "'", "'")
@@ -484,6 +502,7 @@ class ExhentaiSearchExtractor(ExhentaiExtractor):
             if 'class="ptdd">&gt;<' in page or ">No hits found</p>" in page:
                 return
             self.params["page"] += 1
+            self.wait()
 
 
 class ExhentaiFavoriteExtractor(ExhentaiSearchExtractor):
