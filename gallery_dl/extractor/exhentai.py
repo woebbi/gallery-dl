@@ -75,6 +75,7 @@ class ExhentaiExtractor(Extractor):
             waittime = random.uniform(self.wait_min, self.wait_max)
         else:
             waittime = random.uniform(waittime * 0.66, waittime * 1.33)
+        self.log.debug("Sleeping for %.5s seconds", waittime)
         time.sleep(waittime)
 
     def login(self):
