@@ -194,16 +194,6 @@ Description
     Share number of skipped downloads between parent and child extractors.
 
 
-extractor.*.url-metadata
-------------------------
-Type
-    ``string``
-Default
-    ``null``
-Description
-    Insert a file's download URL into its metadata dictionary as the given name.
-
-
 extractor.*.path-restrict
 -------------------------
 Type
@@ -253,6 +243,24 @@ Description
 
     Note: In a string with 2 or more characters, ``[]^-\`` need to be
     escaped with backslashes, e.g. ``"\\[\\]"``
+
+
+extractor.*.path-strip
+----------------------
+Type
+    ``string``
+Default
+    ``"auto"``
+Description
+    Set of characters to remove from the end of generated path segment names
+    using `str.rstrip() <https://docs.python.org/3/library/stdtypes.html#str.rstrip>`_
+
+    Special values:
+
+    * ``"auto"``: Use characters from ``"unix"`` or ``"windows"``
+      depending on the local operating system
+    * ``"unix"``: ``""``
+    * ``"windows"``: ``". "``
 
 
 extractor.*.extension-map
@@ -306,7 +314,7 @@ Description
 extractor.*.sleep
 -----------------
 Type
-    ``float``
+    |Duration|_
 Default
     ``0``
 Description
@@ -316,7 +324,7 @@ Description
 extractor.*.sleep-extractor
 ---------------------------
 Type
-    ``float``
+    |Duration|_
 Default
     ``0``
 Description
@@ -327,7 +335,7 @@ Description
 extractor.*.sleep-request
 -------------------------
 Type
-    ``float``
+    |Duration|_
 Default
     ``0``
 Description
@@ -360,10 +368,10 @@ Description
     * ``imgbb``
     * ``inkbunny``
     * ``instagram``
+    * ``kemonoparty``
     * ``mangadex``
     * ``mangoxo``
     * ``pillowfort``
-    * ``pinterest``
     * ``sankaku``
     * ``subscribestar``
     * ``tapas``
@@ -505,6 +513,16 @@ Default
 Description
     Default value used for missing or undefined keyword names in
     `format strings`_.
+
+
+extractor.*.url-metadata
+------------------------
+Type
+    ``string``
+Default
+    ``null``
+Description
+    Insert a file's download URL into its metadata dictionary as the given name.
 
 
 extractor.*.category-transfer
@@ -671,6 +689,16 @@ Description
     will be executed as normal.
 
 
+extractor.*.fallback
+--------------------
+Type
+    ``bool``
+Default
+    ``true``
+Description
+    Use fallback download URLs when a download fails.
+
+
 extractor.*.image-range
 -----------------------
 Type
@@ -806,17 +834,15 @@ Description
     Download embedded videos hosted on https://www.blogger.com/
 
 
-extractor.danbooru.ugoira
--------------------------
+extractor.danbooru.external
+---------------------------
 Type
     ``bool``
 Default
     ``false``
 Description
-    Controls the download target for Ugoira posts.
-
-    * ``true``: Original ZIP archives
-    * ``false``: Converted video files
+    For unavailable or restricted posts,
+    follow the ``source`` and download from there if possible.
 
 
 extractor.danbooru.metadata
@@ -829,6 +855,19 @@ Description
     Extract additional metadata (notes, artist commentary, parent, children)
 
     Note: This requires 1 additional HTTP request for each post.
+
+
+extractor.danbooru.ugoira
+-------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Controls the download target for Ugoira posts.
+
+    * ``true``: Original ZIP archives
+    * ``false``: Converted video files
 
 
 extractor.derpibooru.api-key
@@ -855,6 +894,38 @@ Description
     to access 18+ content without `API Key <extractor.derpibooru.api-key_>`_.
 
     See `Filters <https://derpibooru.org/filters>`_ for details.
+
+
+extractor.deviantart.auto-watch
+-------------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Automatically watch users when encountering "Watchers-Only Deviations"
+    (requires a `refresh-token <extractor.deviantart.refresh-token_>`_).
+
+
+extractor.deviantart.auto-unwatch
+---------------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    After watching a user through `auto-watch <extractor.deviantart.auto-watch_>`_,
+    unwatch that user at the end of the current extractor run.
+
+
+extractor.deviantart.comments
+-----------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Extract ``comments`` metadata.
 
 
 extractor.deviantart.extra
@@ -1128,6 +1199,16 @@ Description
     * ``"html"``: Raw HTML content
 
 
+extractor.furaffinity.external
+------------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Follow external URLs linked in descriptions.
+
+
 extractor.furaffinity.include
 -----------------------------
 Type
@@ -1301,6 +1382,19 @@ Description
 
     If the selected format is not available,
     the first in the list gets chosen (usually `mp3`).
+
+
+extractor.luscious.gif
+----------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Format in which to download animated images.
+
+    Use ``true`` to download animated images as gifs and ``false``
+    to download as mp4 videos.
 
 
 extractor.mangadex.api-server
@@ -1606,6 +1700,19 @@ Description
     Also search Plurk comments for URLs.
 
 
+extractor.reactor.gif
+---------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Format in which to download animated images.
+
+    Use ``true`` to download animated images as gifs and ``false``
+    to download as mp4 videos.
+
+
 extractor.readcomiconline.captcha
 ---------------------------------
 Type
@@ -1859,6 +1966,16 @@ Description
     <https://help.twitter.com/en/using-twitter/twitter-conversations>`__.
 
 
+extractor.twitter.logout
+------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Logout and retry as guest when access to another user's Tweets is blocked.
+
+
 extractor.twitter.quoted
 ------------------------
 Type
@@ -1877,6 +1994,9 @@ Default
     ``true``
 Description
     Fetch media from replies to other Tweets.
+
+    If this value is ``"self"``, only consider replies where
+    reply and original Tweet are from the same user.
 
 
 extractor.twitter.retweets
@@ -2141,6 +2261,15 @@ Description
     * ``true``: Start with the latest chapter
     * ``false``: Start with the first chapter
 
+
+extractor.[manga-extractor].page-reverse
+----------------------------------------
+Type
+    ``bool``
+Default
+    ``false``
+Description
+    Download manga chapter pages in reverse order.
 
 
 Downloader Options
@@ -2409,6 +2538,9 @@ Default
 Description
     Controls whether the output strings should be shortened to fit
     on one console line.
+
+    Set this option to ``"eaw"`` to also work with east-asian characters
+    with a display width greater than 1.
 
 
 output.skip
@@ -2966,7 +3098,7 @@ How To
       application and put them in your configuration file
       as ``"client-id"`` and ``"client-secret"``
     * clear your `cache <cache.file_>`__ to delete any remaining
-      ``access-token`` entries. (``gallery-dl --clear-cache``)
+      ``access-token`` entries. (``gallery-dl --clear-cache deviantart``)
     * get a new `refresh-token <extractor.deviantart.refresh-token_>`__ for the
       new ``client-id`` (``gallery-dl oauth:deviantart``)
 
@@ -3043,7 +3175,8 @@ Custom Types
 Date
 ----
 Type
-    ``string`` or ``integer``
+    * ``string``
+    * ``integer``
 Example
     * ``"2019-01-01T00:00:00"``
     * ``"2019"`` with ``"%Y"`` as `date-format`_
@@ -3055,10 +3188,28 @@ Description
     * If given as ``integer``, it is interpreted as UTC timestamp.
 
 
+Duration
+--------
+Type
+    * ``float``
+    * ``list`` with 2 ``floats``
+Example
+    * ``2.85``
+    * ``[1.5, 3.0]``
+Description
+    A |Duration|_ represents a span of time in seconds.
+
+    * If given as a single ``float``, it will be used as that exact value.
+    * If given as a ``list`` with 2 floating-point numbers ``a`` & ``b`` ,
+      it will be randomly chosen with uniform distribution such that ``a <= N <=b``.
+      (see `random.uniform() <https://docs.python.org/3/library/random.html#random.uniform>`_)
+
+
 Path
 ----
 Type
-    ``string`` or ``list`` of ``strings``
+    * ``string``
+    * ``list`` of ``strings``
 Example
     * ``"file.ext"``
     * ``"~/path/to/file.ext"``
@@ -3204,6 +3355,7 @@ Description
 .. |datetime| replace:: ``datetime``
 .. |datetime.max| replace:: ``datetime.max``
 .. |Date| replace:: ``Date``
+.. |Duration| replace:: ``Duration``
 .. |Path| replace:: ``Path``
 .. |Last-Modified| replace:: ``Last-Modified``
 .. |Logging Configuration| replace:: ``Logging Configuration``

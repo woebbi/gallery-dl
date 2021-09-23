@@ -26,6 +26,12 @@ Consider all sites to be NSFW unless otherwise known.
     <td></td>
 </tr>
 <tr>
+    <td>420chan</td>
+    <td>https://420chan.org/</td>
+    <td>Boards, Threads</td>
+    <td></td>
+</tr>
+<tr>
     <td>4chan</td>
     <td>https://www.4chan.org/</td>
     <td>Boards, Threads</td>
@@ -116,9 +122,15 @@ Consider all sites to be NSFW unless otherwise known.
     <td>Supported</td>
 </tr>
 <tr>
+    <td>Desktopography</td>
+    <td>https://desktopography.net/</td>
+    <td>Entrys, Exhibitions</td>
+    <td></td>
+</tr>
+<tr>
     <td>DeviantArt</td>
     <td>https://www.deviantart.com/</td>
-    <td>Collections, Deviations, Favorites, Folders, Galleries, Journals, Popular Images, Scraps, Sta.sh, User Profiles, Watches</td>
+    <td>Collections, Deviations, Favorites, Folders, Galleries, Journals, Popular Images, Scraps, Sta.sh, Tag Searches, User Profiles, Watches</td>
     <td><a href="https://github.com/mikf/gallery-dl#oauth">OAuth</a></td>
 </tr>
 <tr>
@@ -142,7 +154,7 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>Eka's Portal</td>
     <td>https://aryion.com/</td>
-    <td>Galleries, Posts</td>
+    <td>Galleries, Posts, Tag Searches</td>
     <td>Supported</td>
 </tr>
 <tr>
@@ -376,8 +388,8 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>Kemonoparty</td>
     <td>https://kemono.party/</td>
-    <td>Posts, User Profiles</td>
-    <td></td>
+    <td>Favorites, Posts, User Profiles</td>
+    <td>Supported</td>
 </tr>
 <tr>
     <td>Khinsider</td>
@@ -490,7 +502,7 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>nhentai</td>
     <td>https://nhentai.net/</td>
-    <td>Galleries, Search Results</td>
+    <td>Favorites, Galleries, Search Results</td>
     <td></td>
 </tr>
 <tr>
@@ -551,7 +563,7 @@ Consider all sites to be NSFW unless otherwise known.
     <td>Pinterest</td>
     <td>https://www.pinterest.com/</td>
     <td>Pins, pin.it Links, related Pins, Search Results, Sections, User Profiles</td>
-    <td>Supported</td>
+    <td><a href="https://github.com/mikf/gallery-dl#cookies">Cookies</a></td>
 </tr>
 <tr>
     <td>Pixhost</td>
@@ -800,6 +812,12 @@ Consider all sites to be NSFW unless otherwise known.
     <td></td>
 </tr>
 <tr>
+    <td>Wikieat</td>
+    <td>https://wikieat.club/</td>
+    <td>Boards, Threads</td>
+    <td></td>
+</tr>
+<tr>
     <td>xHamster</td>
     <td>https://xhamster.com/</td>
     <td>Galleries, User Profiles</td>
@@ -876,25 +894,25 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>Realbooru</td>
     <td>https://realbooru.com/</td>
-    <td>Pools, Posts, Tag Searches</td>
+    <td>Favorites, Pools, Posts, Tag Searches</td>
     <td></td>
 </tr>
 <tr>
     <td>Rule 34</td>
     <td>https://rule34.xxx/</td>
-    <td>Pools, Posts, Tag Searches</td>
+    <td>Favorites, Pools, Posts, Tag Searches</td>
     <td></td>
 </tr>
 <tr>
     <td>Safebooru</td>
     <td>https://safebooru.org/</td>
-    <td>Pools, Posts, Tag Searches</td>
+    <td>Favorites, Pools, Posts, Tag Searches</td>
     <td></td>
 </tr>
 <tr>
     <td>The Big ImageBoard</td>
     <td>https://tbib.org/</td>
-    <td>Pools, Posts, Tag Searches</td>
+    <td>Favorites, Pools, Posts, Tag Searches</td>
     <td></td>
 </tr>
 
@@ -954,72 +972,66 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>4plebs</td>
     <td>https://archive.4plebs.org/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>arch.b4k.co</td>
     <td>https://arch.b4k.co/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Archive of Sins</td>
     <td>https://archiveofsins.com/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Archived.Moe</td>
     <td>https://archived.moe/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Desuarchive</td>
     <td>https://desuarchive.org/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Fireden</td>
     <td>https://boards.fireden.net/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Nyafuu Archive</td>
     <td>https://archive.nyafuu.org/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>RebeccaBlackTech</td>
     <td>https://rbt.asia/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>The /b/ Archive</td>
     <td>https://thebarchive.com/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 <tr>
     <td>Wakarimasen Archive</td>
     <td>https://archive.wakarimasen.moe/</td>
-    <td>Boards, Search Results, Threads</td>
+    <td>Boards, Galleries, Search Results, Threads</td>
     <td></td>
 </tr>
 
 <tr>
     <td colspan="4"><strong>FoOlSlide Instances</strong></td>
-</tr>
-<tr>
-    <td>Doki Reader</td>
-    <td>https://kobato.hologfx.com/reader/</td>
-    <td>Chapters, Manga</td>
-    <td></td>
 </tr>
 <tr>
     <td>Kirei Cake</td>
@@ -1074,6 +1086,12 @@ Consider all sites to be NSFW unless otherwise known.
 <tr>
     <td>Omg Miami Swimwear</td>
     <td>https://www.omgmiamiswimwear.com/</td>
+    <td>Collections, Products</td>
+    <td></td>
+</tr>
+<tr>
+    <td>Windsorstore</td>
+    <td>https://www.windsorstore.com/</td>
     <td>Collections, Products</td>
     <td></td>
 </tr>

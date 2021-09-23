@@ -29,7 +29,7 @@ class InstagramExtractor(Extractor):
     root = "https://www.instagram.com"
     cookiedomain = ".instagram.com"
     cookienames = ("sessionid",)
-    request_interval = 5.0
+    request_interval = (6.0, 12.0)
 
     def __init__(self, match):
         Extractor.__init__(self, match)
@@ -43,6 +43,7 @@ class InstagramExtractor(Extractor):
         self.login()
         data = self.metadata()
         videos = self.config("videos", True)
+        video_headers = {"User-Agent": "Mozilla/5.0"}
 
         for post in self.posts():
 
@@ -60,6 +61,8 @@ class InstagramExtractor(Extractor):
                     url = file["display_url"]
                 elif not videos:
                     continue
+                else:
+                    file["_http_headers"] = video_headers
                 file.update(post)
                 yield Message.Url, url, text.nameext_from_url(url, file)
 
@@ -676,7 +679,6 @@ class InstagramStoriesExtractor(InstagramExtractor):
         ("https://www.instagram.com/stories/instagram/"),
         ("https://www.instagram.com/stories/highlights/18042509488170095/"),
     )
-    request_interval = 1.0
 
     def __init__(self, match):
         self.highlight_id, self.user = match.groups()

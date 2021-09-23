@@ -37,7 +37,7 @@ class MangadexExtractor(Extractor):
 
     def items(self):
         for chapter in self.chapters():
-            uuid = chapter["data"]["id"]
+            uuid = chapter["id"]
             data = self._transform(chapter)
             data["_extractor"] = MangadexChapterExtractor
             self._cache[uuid] = (chapter, data)
@@ -51,8 +51,8 @@ class MangadexExtractor(Extractor):
         for item in manga["relationships"]:
             relationships[item["type"]].append(item["id"])
 
-        cattributes = chapter["data"]["attributes"]
-        mattributes = manga["data"]["attributes"]
+        cattributes = chapter["attributes"]
+        mattributes = manga["attributes"]
         lang = cattributes["translatedLanguage"].partition("-")[0]
 
         if cattributes["chapter"]:
@@ -61,13 +61,14 @@ class MangadexExtractor(Extractor):
             chnum, sep, minor = 0, "", ""
 
         data = {
-            "manga"   : mattributes["title"]["en"],
-            "manga_id": manga["data"]["id"],
+            "manga"   : (mattributes["title"].get("en") or
+                         next(iter(mattributes["title"].values()))),
+            "manga_id": manga["id"],
             "title"   : cattributes["title"],
             "volume"  : text.parse_int(cattributes["volume"]),
             "chapter" : text.parse_int(chnum),
             "chapter_minor": sep + minor,
-            "chapter_id": chapter["data"]["id"],
+            "chapter_id": chapter["id"],
             "date"    : text.parse_datetime(cattributes["publishAt"]),
             "lang"    : lang,
             "language": util.code_to_language(lang),
@@ -76,13 +77,13 @@ class MangadexExtractor(Extractor):
 
         if self.config("metadata"):
             data["artist"] = [
-                self.api.author(uuid)["data"]["attributes"]["name"]
+                self.api.author(uuid)["attributes"]["name"]
                 for uuid in relationships["artist"]]
             data["author"] = [
-                self.api.author(uuid)["data"]["attributes"]["name"]
+                self.api.author(uuid)["attributes"]["name"]
                 for uuid in relationships["author"]]
             data["group"] = [
-                self.api.group(uuid)["data"]["attributes"]["name"]
+                self.api.group(uuid)["attributes"]["name"]
                 for uuid in relationships["scanlation_group"]]
 
         return data
@@ -117,11 +118,14 @@ class MangadexChapterExtractor(MangadexExtractor):
             data = self._transform(chapter)
         yield Message.Directory, data
 
-        cattributes = chapter["data"]["attributes"]
+        cattributes = chapter["attributes"]
         data["_http_headers"] = self._headers
         base = "{}/data/{}/".format(
             self.api.athome_server(self.uuid)["baseUrl"], cattributes["hash"])
-        for data["page"], page in enumerate(cattributes["data"], 1):
+
+        enum = util.enumerate_reversed if self.config(
+            "page-reverse") else enumerate
+        for data["page"], page in enum(cattributes["data"], 1):
             text.nameext_from_url(page, data)
             yield Message.Url, base + page, data
 
@@ -188,18 +192,18 @@ class MangadexAPI():
 
     @memcache(keyarg=1)
     def author(self, uuid):
-        return self._call("/author/" + uuid)
+        return self._call("/author/" + uuid)["data"]
 
     def chapter(self, uuid):
-        return self._call("/chapter/" + uuid)
+        return self._call("/chapter/" + uuid)["data"]
 
     @memcache(keyarg=1)
     def group(self, uuid):
-        return self._call("/group/" + uuid)
+        return self._call("/group/" + uuid)["data"]
 
     @memcache(keyarg=1)
     def manga(self, uuid):
-        return self._call("/manga/" + uuid)
+        return self._call("/manga/" + uuid)["data"]
 
     def manga_feed(self, uuid):
         config = self.extractor.config
@@ -270,7 +274,7 @@ class MangadexAPI():
 
         while True:
             data = self._call(endpoint, params)
-            yield from data["results"]
+            yield from data["data"]
 
             params["offset"] = data["offset"] + data["limit"]
             if params["offset"] >= data["total"]:

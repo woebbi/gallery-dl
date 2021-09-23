@@ -139,6 +139,17 @@ def delete_items(obj, keys):
             del obj[key]
 
 
+def enumerate_reversed(iterable, start=0, length=None):
+    """Enumerate 'iterable' and return its elements in reverse order"""
+    start -= 1
+    if length is None:
+        length = len(iterable)
+    return zip(
+        range(length - start, start, -1),
+        reversed(iterable),
+    )
+
+
 def number_to_string(value, numbers=(int, float)):
     """Convert numbers (int, float) to string; Return everything else as is."""
     return str(value) if value.__class__ in numbers else value
@@ -409,6 +420,24 @@ def compile_expression(expr, name="<expr>", globals=GLOBALS):
     return functools.partial(eval, code_object, globals)
 
 
+def build_duration_func(duration, min=0.0):
+    if not duration:
+        return None
+
+    try:
+        lower, upper = duration
+    except TypeError:
+        pass
+    else:
+        return functools.partial(
+            random.uniform,
+            lower if lower > min else min,
+            upper if upper > min else min,
+        )
+
+    return functools.partial(identity, duration if duration > min else min)
+
+
 def build_predicate(predicates):
     if not predicates:
         return lambda url, kwdict: True
@@ -547,6 +576,7 @@ class Formatter():
     - "u": calls str.upper
     - "c": calls str.capitalize
     - "C": calls string.capwords
+    - "j". calls json.dumps
     - "t": calls str.strip
     - "d": calls text.parse_timestamp
     - "U": calls urllib.parse.unquote
@@ -581,6 +611,7 @@ class Formatter():
         "u": str.upper,
         "c": str.capitalize,
         "C": string.capwords,
+        "j": json.dumps,
         "t": str.strip,
         "T": to_timestamp,
         "d": text.parse_timestamp,
@@ -849,6 +880,15 @@ class PathFormat():
         remove = config("path-remove", "\x00-\x1f\x7f")
         self.clean_path = self._build_cleanfunc(remove, "")
 
+        strip = config("path-strip", "auto")
+        if strip == "auto":
+            strip = ". " if WINDOWS else ""
+        elif strip == "unix":
+            strip = ""
+        elif strip == "windows":
+            strip = ". "
+        self.strip = strip
+
         basedir = extractor._parentdir
         if not basedir:
             basedir = config("base-directory")
@@ -982,13 +1022,14 @@ class PathFormat():
         """Apply 'kwdict' to directory format strings"""
         segments = []
         append = segments.append
+        strip = self.strip
 
         try:
             for formatter in self.directory_formatters:
                 segment = formatter(kwdict).strip()
-                if WINDOWS:
+                if strip:
                     # remove trailing dots and spaces (#647)
-                    segment = segment.rstrip(". ")
+                    segment = segment.rstrip(strip)
                 if segment:
                     append(self.clean_segment(segment))
             return segments
@@ -998,6 +1039,7 @@ class PathFormat():
     def build_directory_conditional(self, kwdict):
         segments = []
         append = segments.append
+        strip = self.strip
 
         try:
             for condition, formatters in self.directory_conditions:
@@ -1007,8 +1049,8 @@ class PathFormat():
                 formatters = self.directory_formatters
             for formatter in formatters:
                 segment = formatter(kwdict).strip()
-                if WINDOWS:
-                    segment = segment.rstrip(". ")
+                if strip:
+                    segment = segment.rstrip(strip)
                 if segment:
                     append(self.clean_segment(segment))
             return segments

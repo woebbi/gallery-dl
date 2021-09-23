@@ -21,7 +21,6 @@ class SeisopartyExtractor(Extractor):
     filename_fmt = "{id}_{title}_{num:>02}_{filename}.{extension}"
     archive_fmt = "{service}_{user}_{id}_{num}"
     cookiedomain = ".seiso.party"
-    _warning = True
 
     def __init__(self, match):
         Extractor.__init__(self, match)
@@ -30,10 +29,7 @@ class SeisopartyExtractor(Extractor):
             r'href="(https://cdn(?:-\d)?\.seiso\.party/files/[^"]+)').findall
 
     def items(self):
-        if self._warning:
-            if not self._check_cookies(("__ddg1", "__ddg2")):
-                self.log.warning("no DDoS-GUARD cookies set (__ddg1, __ddg2)")
-            SeisopartyExtractor._warning = False
+        self._prepare_ddosguard_cookies()
 
         for post in self.posts():
             files = post.pop("files")
@@ -109,7 +105,7 @@ class SeisopartyPostExtractor(SeisopartyExtractor):
             "url": "75f13b92de0ce399b6163c3de18f1f36011c2366",
             "count": 2,
             "keyword": {
-                "content": "この前描いためぐるちゃんのPSDファイルです。\n"
+                "content": "この前描いためぐるちゃんのPSDファイルです。<br/>"
                            "どうぞよろしくお願いします。",
                 "date": "dt:2021-05-06 12:38:31",
                 "extension": "re:psd|jpg",

@@ -68,12 +68,16 @@ class Job():
 
     def run(self):
         """Execute or run the job"""
-        sleep = self.extractor.config("sleep-extractor")
+        extractor = self.extractor
+        log = extractor.log
+        msg = None
+
+        sleep = util.build_duration_func(extractor.config("sleep-extractor"))
         if sleep:
-            time.sleep(sleep)
+            time.sleep(sleep())
+
         try:
-            log = self.extractor.log
-            for msg in self.extractor:
+            for msg in extractor:
                 self.dispatch(msg)
         except exception.StopExtraction as exc:
             if exc.message:
@@ -100,8 +104,14 @@ class Job():
         except BaseException:
             self.status |= 1
             raise
+        else:
+            if msg is None:
+                log.info("No results for %s", extractor.url)
         finally:
             self.handle_finalize()
+            if extractor.finalize:
+                extractor.finalize()
+
         return self.status
 
     def dispatch(self, msg):
@@ -124,13 +134,6 @@ class Job():
                 kwdict[self.url_key] = url
             if self.pred_queue(url, kwdict):
                 self.handle_queue(url, kwdict)
-
-        elif msg[0] == Message.Version:
-            if msg[1] != 1:
-                raise "unsupported message-version ({}, {})".format(
-                    self.extractor.category, msg[1]
-                )
-            # TODO: support for multiple message versions
 
     def handle_url(self, url, kwdict):
         """Handle Message.Url"""
@@ -199,6 +202,7 @@ class DownloadJob(Job):
         Job.__init__(self, url, parent)
         self.log = self.get_logger("download")
         self.blacklist = None
+        self.fallback = None
         self.archive = None
         self.sleep = None
         self.hooks = ()
@@ -232,13 +236,14 @@ class DownloadJob(Job):
             return
 
         if self.sleep:
-            time.sleep(self.sleep)
+            time.sleep(self.sleep())
 
         # download from URL
         if not self.download(url):
 
-            # use fallback URLs if available
-            for num, url in enumerate(kwdict.get("_fallback", ()), 1):
+            # use fallback URLs if available/enabled
+            fallback = kwdict.get("_fallback", ()) if self.fallback else ()
+            for num, url in enumerate(fallback, 1):
                 util.remove_file(pathfmt.temppath)
                 self.log.info("Trying fallback URL #%d", num)
                 if self.download(url):
@@ -393,7 +398,8 @@ class DownloadJob(Job):
         if kwdict:
             pathfmt.set_directory(kwdict)
 
-        self.sleep = cfg("sleep")
+        self.sleep = util.build_duration_func(cfg("sleep"))
+        self.fallback = cfg("fallback", True)
         if not cfg("download", True):
             # monkey-patch method to do nothing and always return True
             self.download = pathfmt.fix_extension
@@ -535,7 +541,7 @@ class SimulationJob(DownloadJob):
         self.pathfmt.set_filename(kwdict)
         self.out.skip(self.pathfmt.path)
         if self.sleep:
-            time.sleep(self.sleep)
+            time.sleep(self.sleep())
         if self.archive:
             self.archive.add(kwdict)
 
@@ -689,9 +695,10 @@ class DataJob(Job):
         self.filter = util.identity if private else util.filter_dict
 
     def run(self):
-        sleep = self.extractor.config("sleep-extractor")
+        sleep = util.build_duration_func(
+            self.extractor.config("sleep-extractor"))
         if sleep:
-            time.sleep(sleep)
+            time.sleep(sleep())
 
         # collect data
         try:

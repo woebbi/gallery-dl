@@ -28,6 +28,7 @@ class ReactorExtractor(Extractor):
         Extractor.__init__(self, match)
         self.root = "http://" + match.group(1)
         self.session.headers["Referer"] = self.root
+        self.gif = self.config("gif", False)
 
         if not self.category:
             # set category based on domain name
@@ -36,7 +37,6 @@ class ReactorExtractor(Extractor):
 
     def items(self):
         data = self.metadata()
-        yield Message.Version, 1
         yield Message.Directory, data
         for post in self.posts():
             for image in self._parse_post(post):
@@ -124,6 +124,12 @@ class ReactorExtractor(Extractor):
             elif "/post/webm/" not in url and "/post/mp4/" not in url:
                 url = url.replace("/post/", "/post/full/")
 
+            if self.gif and ("/post/webm/" in url or "/post/mp4/" in url):
+                gif_url = text.extract(image, '<a href="', '"')[0]
+                if not gif_url:
+                    continue
+                url = gif_url
+
             yield {
                 "url": url,
                 "post_id": post_id,
@@ -190,7 +196,6 @@ class ReactorPostExtractor(ReactorExtractor):
         self.post_id = match.group(2)
 
     def items(self):
-        yield Message.Version, 1
         post = self.request(self.url).text
         pos = post.find('class="uhead">')
         for image in self._parse_post(post[pos:]):

@@ -26,7 +26,6 @@ CATEGORY_MAP = {
     "bcy"            : "半次元",
     "comicvine"      : "Comic Vine",
     "deviantart"     : "DeviantArt",
-    "dokireader"     : "Doki Reader",
     "drawfriends"    : "Draw Friends",
     "dynastyscans"   : "Dynasty Reader",
     "e621"           : "e621",
@@ -135,6 +134,9 @@ SUBCATEGORY_MAP = {
     "artstation": {
         "artwork": "Artwork Listings",
     },
+    "desktopography": {
+        "site": "",
+    },
     "deviantart": {
         "stash": "Sta.sh",
         "watch-posts": "",
@@ -172,6 +174,7 @@ SUBCATEGORY_MAP = {
     },
     "twitter": {
         "media": "Media Timelines",
+        "replies": "",
         "list-members": "List Members",
     },
     "wallhaven": {
@@ -220,6 +223,7 @@ AUTH_MAP = {
     "imgbb"          : "Supported",
     "inkbunny"       : "Supported",
     "instagram"      : "Supported",
+    "kemonoparty"    : "Supported",
     "mangadex"       : "Supported",
     "mangoxo"        : "Supported",
     "mastodon.social": _OAUTH,
@@ -228,7 +232,7 @@ AUTH_MAP = {
     "patreon"        : _COOKIES,
     "pawoo"          : _OAUTH,
     "pillowfort"     : "Supported",
-    "pinterest"      : "Supported",
+    "pinterest"      : _COOKIES,
     "pixiv"          : _OAUTH,
     "ponybooru"      : "API Key",
     "reddit"         : _OAUTH,

@@ -50,11 +50,16 @@ class TwitterExtractor(Extractor):
             if not self.retweets and "retweeted_status_id_str" in tweet:
                 self.log.debug("Skipping %s (retweet)", tweet["id_str"])
                 continue
-            if not self.replies and "in_reply_to_user_id_str" in tweet:
-                self.log.debug("Skipping %s (reply)", tweet["id_str"])
-                continue
             if not self.quoted and "quoted" in tweet:
                 self.log.debug("Skipping %s (quoted tweet)", tweet["id_str"])
+                continue
+            if "in_reply_to_user_id_str" in tweet and (
+                not self.replies or (
+                    self.replies == "self" and
+                    tweet["in_reply_to_user_id_str"] != tweet["user_id_str"]
+                )
+            ):
+                self.log.debug("Skipping %s (reply)", tweet["id_str"])
                 continue
 
             files = []
@@ -134,8 +139,10 @@ class TwitterExtractor(Extractor):
                 for size in ("original", "x_large", "large", "small"):
                     key = prefix + size
                     if key in bvals:
-                        files.append(bvals[key]["image_value"])
-                        return
+                        value = bvals[key].get("image_value")
+                        if value and "url" in value:
+                            files.append(value)
+                            return
         elif self.videos:
             url = "ytdl:{}/i/web/status/{}".format(self.root, tweet["id_str"])
             files.append({"url": url})
@@ -203,30 +210,45 @@ class TwitterExtractor(Extractor):
         return tdata
 
     def _transform_user(self, user):
-        uid = user["id_str"]
-        cache = self._user_cache
+        try:
+            return self._user_cache[user["id_str"]]
+        except KeyError:
+            pass
 
-        if uid not in cache:
-            cache[uid] = {
-                "id"              : text.parse_int(uid),
-                "name"            : user["screen_name"],
-                "nick"            : user["name"],
-                "description"     : user["description"],
-                "location"        : user["location"],
-                "date"            : text.parse_datetime(
-                    user["created_at"], "%a %b %d %H:%M:%S %z %Y"),
-                "verified"        : user.get("verified", False),
-                "profile_banner"  : user.get("profile_banner_url", ""),
-                "profile_image"   : user.get(
-                    "profile_image_url_https", "").replace("_normal.", "."),
-                "favourites_count": user["favourites_count"],
-                "followers_count" : user["followers_count"],
-                "friends_count"   : user["friends_count"],
-                "listed_count"    : user["listed_count"],
-                "media_count"     : user["media_count"],
-                "statuses_count"  : user["statuses_count"],
-            }
-        return cache[uid]
+        uid = user["id_str"]
+        entities = user["entities"]
+
+        self._user_cache[uid] = udata = {
+            "id"              : text.parse_int(uid),
+            "name"            : user["screen_name"],
+            "nick"            : user["name"],
+            "location"        : user["location"],
+            "date"            : text.parse_datetime(
+                user["created_at"], "%a %b %d %H:%M:%S %z %Y"),
+            "verified"        : user.get("verified", False),
+            "profile_banner"  : user.get("profile_banner_url", ""),
+            "profile_image"   : user.get(
+                "profile_image_url_https", "").replace("_normal.", "."),
+            "favourites_count": user["favourites_count"],
+            "followers_count" : user["followers_count"],
+            "friends_count"   : user["friends_count"],
+            "listed_count"    : user["listed_count"],
+            "media_count"     : user["media_count"],
+            "statuses_count"  : user["statuses_count"],
+        }
+
+        descr = user["description"]
+        urls = entities["description"].get("urls")
+        if urls:
+            for url in urls:
+                descr = descr.replace(url["url"], url["expanded_url"])
+        udata["description"] = descr
+
+        if "url" in entities:
+            url = entities["url"]["urls"][0]
+            udata["url"] = url.get("expanded_url") or url.get("url")
+
+        return udata
 
     def _users_result(self, users):
         userfmt = self.config("users")
@@ -296,7 +318,7 @@ class TwitterExtractor(Extractor):
 
 
 class TwitterTimelineExtractor(TwitterExtractor):
-    """Extractor for all images from a user's timeline"""
+    """Extractor for Tweets from a user's timeline"""
     subcategory = "timeline"
     pattern = (BASE_PATTERN + r"/(?!search)(?:([^/?#]+)/?(?:$|[?#])"
                r"|i(?:/user/|ntent/user\?user_id=)(\d+))")
@@ -321,8 +343,25 @@ class TwitterTimelineExtractor(TwitterExtractor):
         return TwitterAPI(self).timeline_profile(self.user)
 
 
+class TwitterRepliesExtractor(TwitterExtractor):
+    """Extractor for Tweets from a user's timeline including replies"""
+    subcategory = "replies"
+    pattern = BASE_PATTERN + r"/(?!search)([^/?#]+)/with_replies(?!\w)"
+    test = (
+        ("https://twitter.com/supernaturepics/with_replies", {
+            "range": "1-40",
+            "url": "c570ac1aae38ed1463be726cc46f31cac3d82a40",
+        }),
+        ("https://mobile.twitter.com/supernaturepics/with_replies#t"),
+        ("https://www.twitter.com/id:2976459548/with_replies"),
+    )
+
+    def tweets(self):
+        return TwitterAPI(self).timeline_profile(self.user, replies=True)
+
+
 class TwitterMediaExtractor(TwitterExtractor):
-    """Extractor for all images from a user's Media Tweets"""
+    """Extractor for Tweets from a user's Media timeline"""
     subcategory = "media"
     pattern = BASE_PATTERN + r"/(?!search)([^/?#]+)/media(?!\w)"
     test = (
@@ -450,6 +489,20 @@ class TwitterTweetExtractor(TwitterExtractor):
         # 'replies' option (#705)
         ("https://twitter.com/i/web/status/1170041925560258560", {
             "options": (("replies", False),),
+            "count": 0,
+        }),
+        # 'replies' to self (#1254)
+        ("https://twitter.com/i/web/status/1424882930803908612", {
+            "options": (("replies", "self"),),
+            "count": 4,
+            "keyword": {"user": {
+                "description": "re:business email-- rhettaro.bloom@gmail.com "
+                               "patreon- http://patreon.com/Princecanary",
+                "url": "http://princecanary.tumblr.com",
+            }},
+        }),
+        ("https://twitter.com/i/web/status/1424898916156284928", {
+            "options": (("replies", "self"),),
             "count": 0,
         }),
         # "quoted" option (#854)
@@ -582,8 +635,8 @@ class TwitterAPI():
             "ext": "mediaStats,highlightedLabel",
         }
 
-        cookies = self.extractor.session.cookies
-        cookiedomain = ".twitter.com"
+        cookies = extractor.session.cookies
+        cookiedomain = extractor.cookiedomain
 
         # CSRF
         csrf_token = cookies.get("ct0", domain=cookiedomain)
@@ -618,11 +671,11 @@ class TwitterAPI():
         endpoint = "/2/timeline/conversation/{}.json".format(conversation_id)
         return self._pagination(endpoint)
 
-    def timeline_profile(self, screen_name):
+    def timeline_profile(self, screen_name, replies=False):
         user_id = self._user_id_by_screen_name(screen_name)
         endpoint = "/2/timeline/profile/{}.json".format(user_id)
         params = self.params.copy()
-        params["include_tweet_replies"] = "false"
+        params["include_tweet_replies"] = "true" if replies else "false"
         return self._pagination(endpoint, params)
 
     def timeline_media(self, screen_name):
@@ -726,21 +779,48 @@ class TwitterAPI():
             if csrf_token:
                 self.headers["x-csrf-token"] = csrf_token
 
+            data = response.json()
+            if "errors" in data:
+                try:
+                    msg = ", ".join(
+                        '"' + error["message"] + '"'
+                        for error in data["errors"]
+                    )
+                except Exception:
+                    msg = data["errors"]
+                if msg and response.status_code < 400:
+                    raise exception.StopExtraction(msg)
+            else:
+                msg = ""
+
             if response.status_code < 400:
-                return response.json()
+                # success
+                return data
+
             if response.status_code == 429:
+                # rate limit exceeded
                 until = response.headers.get("x-rate-limit-reset")
                 seconds = None if until else 60
                 self.extractor.wait(until=until, seconds=seconds)
                 continue
 
-            try:
-                msg = ", ".join(
-                    '"' + error["message"] + '"'
-                    for error in response.json()["errors"]
-                )
-            except Exception:
-                msg = response.text
+            if response.status_code == 401 and \
+                    "have been blocked from viewing" in msg:
+                # account blocked
+                extr = self.extractor
+                if self.headers["x-twitter-auth-type"] and \
+                        extr.config("logout"):
+                    guest_token = self._guest_token()
+                    extr.session.cookies.set(
+                        "gt", guest_token, domain=extr.cookiedomain)
+                    extr._cookiefile = None
+                    del extr.session.cookies["auth_token"]
+                    self.headers["x-guest-token"] = guest_token
+                    self.headers["x-twitter-auth-type"] = None
+                    extr.log.info("Retrying API request as guest")
+                    continue
+
+            # error
             raise exception.StopExtraction(
                 "%s %s (%s)", response.status_code, response.reason, msg)
 
@@ -822,6 +902,7 @@ class TwitterAPI():
                 if "quoted_status_id_str" in tweet:
                     quoted = tweets.get(tweet["quoted_status_id_str"])
                     if quoted:
+                        quoted = quoted.copy()
                         quoted["author"] = users[quoted["user_id_str"]]
                         quoted["user"] = tweet["user"]
                         quoted["quoted"] = True

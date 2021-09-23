@@ -1,43 +1,37 @@
 # -*- coding: utf-8 -*-
 
-# Copyright 2020 Mike Fährmann
+# Copyright 2021 Mike Fährmann
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.
 
-"""Extractors for https://8kun.top/"""
+"""Extractors for https://wikieat.club/"""
 
 from .common import Extractor, Message
 from .. import text
 
 
-class _8kunThreadExtractor(Extractor):
-    """Extractor for 8kun threads"""
-    category = "8kun"
+class WikieatThreadExtractor(Extractor):
+    """Extractor for Wikieat threads"""
+    category = "wikieat"
     subcategory = "thread"
     directory_fmt = ("{category}", "{board}", "{thread} {title}")
     filename_fmt = "{time}{num:?-//} {filename}.{extension}"
     archive_fmt = "{board}_{thread}_{tim}"
-    pattern = r"(?:https?://)?8kun\.top/([^/]+)/res/(\d+)"
-    test = (
-        ("https://8kun.top/test/res/65248.html", {
-            "pattern": r"https://media\.8kun\.top/file_store/\w{64}\.\w+",
-            "count": ">= 8",
-        }),
-        # old-style file URLs (#1101)
-        ("https://8kun.top/d/res/13258.html", {
-            "pattern": r"https://media\.8kun\.top/d/src/\d+(-\d)?\.\w+",
-            "range": "1-20",
-        }),
-    )
+    pattern = r"(?:https?://)?wikieat\.club/([^/]+)/res/(\d+)"
+    test = ("https://wikieat.club/cel/res/25321.html", {
+        "pattern": r"https://wikieat\.club/cel/src/\d+(-\d)?\.\w+",
+        "count": ">= 200",
+    })
 
     def __init__(self, match):
         Extractor.__init__(self, match)
         self.board, self.thread = match.groups()
 
     def items(self):
-        url = "https://8kun.top/{}/res/{}.json".format(self.board, self.thread)
+        url = "https://wikieat.club/{}/res/{}.json".format(
+            self.board, self.thread)
         posts = self.request(url).json()["posts"]
         title = posts[0].get("sub") or text.remove_html(posts[0]["com"])
         process = self._process
@@ -63,24 +57,25 @@ class _8kunThreadExtractor(Extractor):
         post.update(data)
         post["extension"] = post["ext"][1:]
         tim = post["tim"]
-        url = ("https://media.8kun.top/" +
-               ("file_store/" if len(tim) > 16 else post["board"] + "/src/") +
+        url = ("https://wikieat.club/" +
+               post["board"] + "/src/" +
                tim + post["ext"])
         return Message.Url, url, post
 
 
-class _8kunBoardExtractor(Extractor):
-    """Extractor for 8kun boards"""
-    category = "8kun"
+class WikieatBoardExtractor(Extractor):
+    """Extractor for Wikieat boards"""
+    category = "wikieat"
     subcategory = "board"
-    pattern = r"(?:https?://)?8kun\.top/([^/?#]+)/(?:index|\d+)\.html"
+    pattern = (r"(?:https?://)?wikieat\.club"
+               r"/([^/?#]+)/(?:index|catalog|\d+)\.html")
     test = (
-        ("https://8kun.top/v/index.html", {
-            "pattern": _8kunThreadExtractor.pattern,
+        ("https://wikieat.club/cel/index.html", {
+            "pattern": WikieatThreadExtractor.pattern,
             "count": ">= 100",
         }),
-        ("https://8kun.top/v/2.html"),
-        ("https://8kun.top/v/index.html?PageSpeed=noscript"),
+        ("https://wikieat.club/cel/catalog.html"),
+        ("https://wikieat.club/cel/2.html")
     )
 
     def __init__(self, match):
@@ -88,13 +83,13 @@ class _8kunBoardExtractor(Extractor):
         self.board = match.group(1)
 
     def items(self):
-        url = "https://8kun.top/{}/threads.json".format(self.board)
+        url = "https://wikieat.club/{}/threads.json".format(self.board)
         threads = self.request(url).json()
 
         for page in threads:
             for thread in page["threads"]:
-                url = "https://8kun.top/{}/res/{}.html".format(
+                url = "https://wikieat.club/{}/res/{}.html".format(
                     self.board, thread["no"])
                 thread["page"] = page["page"]
-                thread["_extractor"] = _8kunThreadExtractor
+                thread["_extractor"] = WikieatThreadExtractor
                 yield Message.Queue, url, thread
