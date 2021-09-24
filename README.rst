@@ -45,7 +45,7 @@ pip_ as well:
 
 .. code:: bash
 
-    $ python3 -m pip install -U -I --no-deps --no-cache-dir https://github.com/mikf/gallery-dl/archive/master.tar.gz
+    $ python3 -m pip install -U -I --no-deps --no-cache-dir https://github.com/woebbi/gallery-dl/archive/master.tar.gz
 
 Note: Windows users should use :code:`py -3` instead of :code:`python3`.
 
